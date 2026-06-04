@@ -18,6 +18,7 @@ public class Relic {
 
     private String imageUrl;
 
+    // Relacionamentos simples por enquanto
     private Long userId;
     private Long tcgId;
 
@@ -27,6 +28,15 @@ public class Relic {
     private Long languageId;
 
     private Boolean inStock = true;
+
+    // NOVO CAMPO: Localização
+    private String location;
+
+    // NOVO CAMPO: Nível de Impulsionamento VIP (0 = Normal, 1 = Bronze, 2 = Prata, 3 = Ouro)
+    private Integer boostLevel = 0;
+
+    // NOVO CAMPO: Validade do Impulsionamento
+    private java.time.LocalDateTime boostExpiresAt;
 
     public Relic() {}
 
@@ -63,4 +73,13 @@ public class Relic {
 
     public Boolean getInStock() { return inStock; }
     public void setInStock(Boolean inStock) { this.inStock = inStock; }
+
+    public String getLocation() { return location; }
+    public void setLocation(String location) { this.location = location; }
+
+    public Integer getBoostLevel() { return boostLevel; }
+    public void setBoostLevel(Integer boostLevel) { this.boostLevel = boostLevel; }
+
+    public java.time.LocalDateTime getBoostExpiresAt() { return boostExpiresAt; }
+    public void setBoostExpiresAt(java.time.LocalDateTime boostExpiresAt) { this.boostExpiresAt = boostExpiresAt; }
 }

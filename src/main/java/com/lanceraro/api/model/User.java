@@ -20,17 +20,15 @@ public class User {
     private String avatarUrl;
     private String nickname;
 
+    // NOVO CAMPO: Contato do WhatsApp
+    private String phone;
+
     // O JPA exige um construtor vazio
     public User() {}
 
-    // Getters e Setters (Para permitir que outras classes leiam e alterem os dados)
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
+    // Getters e Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
@@ -46,4 +44,7 @@ public class User {
 
     public String getNickname() { return nickname; }
     public void setNickname(String nickname) { this.nickname = nickname; }
+
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
 }

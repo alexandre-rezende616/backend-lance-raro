@@ -41,4 +41,9 @@ public class UserController {
         }
         return null;
     }
+
+    @DeleteMapping("/{id}")
+    public void deleteUser(@PathVariable Long id) {
+        userRepository.deleteById(id); // Apaga o aventureiro do banco de dados!
+    }
 }
