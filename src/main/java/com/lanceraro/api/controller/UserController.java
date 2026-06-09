@@ -1,9 +1,15 @@
 package com.lanceraro.api.controller;
 
 import com.lanceraro.api.model.User;
+import com.lanceraro.api.model.Relic;
+import com.lanceraro.api.model.Notification;
 import com.lanceraro.api.repository.UserRepository;
+import com.lanceraro.api.repository.RelicRepository;
+import com.lanceraro.api.repository.NotificationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -11,6 +17,12 @@ public class UserController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private RelicRepository relicRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
 
     @PostMapping("/login")
     public User login(@RequestBody User loginData) throws Exception {
@@ -44,6 +56,15 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     public void deleteUser(@PathVariable Long id) {
-        userRepository.deleteById(id); // Apaga o aventureiro do banco de dados!
+        // 1. Queima todos os corvos (notificações) do usuário
+        List<Notification> notifs = notificationRepository.findByUserIdOrderByCreatedAtDesc(id);
+        notificationRepository.deleteAll(notifs);
+
+        // 2. Apaga as relíquias (anúncios) do usuário para não virarem "Cartas Fantasmas"
+        List<Relic> relics = relicRepository.findByUserId(id);
+        relicRepository.deleteAll(relics);
+
+        // 3. Finalmente, bane a conta do aventureiro!
+        userRepository.deleteById(id);
     }
 }
