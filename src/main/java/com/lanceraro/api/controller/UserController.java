@@ -42,6 +42,11 @@ public class UserController {
         return userRepository.save(newUser);
     }
 
+    @GetMapping("/{id}")
+    public User getUser(@PathVariable Long id) {
+        return userRepository.findById(id).orElse(null); // Devolve a identidade do vendedor!
+    }
+
     @PutMapping("/{id}")
     public User updateUser(@PathVariable Long id, @RequestBody User updateData) {
         User existingUser = userRepository.findById(id).orElse(null);
@@ -49,6 +54,7 @@ public class UserController {
             if (updateData.getNickname() != null && !updateData.getNickname().isEmpty()) existingUser.setNickname(updateData.getNickname());
             if (updateData.getPassword() != null && !updateData.getPassword().isEmpty()) existingUser.setPassword(updateData.getPassword());
             if (updateData.getAvatarUrl() != null && !updateData.getAvatarUrl().isEmpty()) existingUser.setAvatarUrl(updateData.getAvatarUrl());
+            if (updateData.getPhone() != null && !updateData.getPhone().isEmpty()) existingUser.setPhone(updateData.getPhone());
             return userRepository.save(existingUser);
         }
         return null;
