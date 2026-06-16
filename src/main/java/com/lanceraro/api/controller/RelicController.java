@@ -70,8 +70,8 @@ public class RelicController {
         Relic relic = relicRepository.findById(id).orElse(null);
         if (relic != null) {
             relic.setBoostLevel(level); // Evolui a carta para Bronze, Prata ou Ouro!
-            // Bronze = 3 dias | Prata = 7 dias | Ouro = 15 dias
-            int dias = (level == 3) ? 15 : ((level == 2) ? 7 : 3);
+            // Bronze = 3 dias | Prata = 7 dias | Ouro = 30 dias
+            int dias = (level == 3) ? 30 : ((level == 2) ? 7 : 3);
             relic.setBoostExpiresAt(java.time.LocalDateTime.now().plusDays(dias));
 
             // Envia um Corvo confirmando a compra!
