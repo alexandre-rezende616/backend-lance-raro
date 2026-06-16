@@ -59,7 +59,7 @@ public class PaymentController {
                     "name", "Aventureiro da Guilda",
                     "email", request.payerEmail != null ? request.payerEmail : "aventureiro@guilda.com",
                     "cellphone", "11999999999",
-                    "taxId", "12345678909"
+                    "taxId", "05674335109"
             );
 
             Map<String, Object> body = Map.of(
