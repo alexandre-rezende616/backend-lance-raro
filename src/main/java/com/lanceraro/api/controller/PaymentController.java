@@ -1,6 +1,8 @@
 package com.lanceraro.api.controller;
 
+import com.lanceraro.api.model.Notification;
 import com.lanceraro.api.model.Relic;
+import com.lanceraro.api.repository.NotificationRepository;
 import com.lanceraro.api.repository.RelicRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +22,9 @@ public class PaymentController {
 
     @Autowired
     private RelicRepository relicRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
 
     public static class CheckoutRequest {
         public Long relicId;
@@ -43,17 +48,23 @@ public class PaymentController {
 
             // Monta o pacote de dados exigido pelo AbacatePay
             Map<String, Object> product = Map.of(
-                    "externalId", "relic-" + relic.getId(),
+                    "externalId", "relic-" + relic.getId() + "-" + request.boostLevel,
                     "name", title + " - " + relic.getTitle(),
                     "quantity", 1,
                     "price", priceInCents,
                     "description", "Destaque VIP na Taverna Lance Raro"
             );
 
+            Map<String, Object> customer = Map.of(
+                    "name", "Aventureiro da Guilda",
+                    "email", request.payerEmail != null ? request.payerEmail : "aventureiro@guilda.com"
+            );
+
             Map<String, Object> body = Map.of(
                     "frequency", "ONE_TIME",
                     "methods", List.of("PIX"),
                     "products", List.of(product),
+                    "customer", customer,
                     "returnUrl", "https://lance-raro-api.onrender.com",
                     "completionUrl", "https://lance-raro-api.onrender.com/api/payments/webhook"
             );
@@ -76,11 +87,43 @@ public class PaymentController {
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("A guilda do AbacatePay recusou o pedido.");
 
-        } catch (org.springframework.web.client.RestClientResponseException e) {
-            // Captura o erro exato retornado pelo AbacatePay!
-            return ResponseEntity.status(e.getStatusCode()).body("A API do AbacatePay rejeitou: " + e.getResponseBodyAsString());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro na magia de pagamento: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/webhook")
+    public ResponseEntity<?> handleWebhook(@RequestBody Map<String, Object> payload) {
+        try {
+            Map<String, Object> data = (Map<String, Object>) payload.get("data");
+            if (data != null && "PAID".equals(data.get("status"))) {
+                List<Map<String, Object>> products = (List<Map<String, Object>>) data.get("products");
+                if (products != null && !products.isEmpty()) {
+                    String externalId = (String) products.get(0).get("externalId");
+                    if (externalId != null && externalId.startsWith("relic-")) {
+                        String[] parts = externalId.split("-");
+                        if (parts.length >= 3) {
+                            Long relicId = Long.parseLong(parts[1]);
+                            Integer level = Integer.parseInt(parts[2]);
+                            Relic relic = relicRepository.findById(relicId).orElse(null);
+                            if (relic != null) {
+                                relic.setBoostLevel(level);
+                                int dias = (level == 3) ? 30 : ((level == 2) ? 7 : 3);
+                                relic.setBoostExpiresAt(java.time.LocalDateTime.now().plusDays(dias));
+                                relicRepository.save(relic);
+                                Notification notif = new Notification();
+                                notif.setUserId(relic.getUserId());
+                                notif.setTitle("Destaque VIP Ativado! ✨");
+                                notif.setMessage("A relíquia '" + relic.getTitle() + "' brilhará no topo do mural por " + dias + " dias.");
+                                notificationRepository.save(notif);
+                            }
+                        }
+                    }
+                }
+            }
+            return ResponseEntity.ok("Webhook recebido pela Taverna!");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro no Correio: " + e.getMessage());
         }
     }
 
