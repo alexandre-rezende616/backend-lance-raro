@@ -58,7 +58,8 @@ public class PaymentController {
             Map<String, Object> customer = Map.of(
                     "name", "Aventureiro da Guilda",
                     "email", request.payerEmail != null ? request.payerEmail : "aventureiro@guilda.com",
-                    "cellphone", "11999999999"
+                    "cellphone", "11999999999",
+                    "taxId", "12345678909"
             );
 
             Map<String, Object> body = Map.of(
