@@ -10,12 +10,37 @@ import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/payments")
 public class PaymentController {
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> asMap(Object value) {
+        if (value instanceof Map<?, ?> map) {
+            Map<String, Object> typed = new HashMap<>();
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                typed.put(String.valueOf(entry.getKey()), entry.getValue());
+            }
+            return typed;
+        }
+        return new HashMap<>();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Map<String, Object>> asListOfMaps(Object value) {
+        if (value instanceof List<?> list) {
+            List<Map<String, Object>> typed = new java.util.ArrayList<>();
+            for (Object item : list) {
+                typed.add(asMap(item));
+            }
+            return typed;
+        }
+        return java.util.Collections.emptyList();
+    }
 
     @Value("${ABACATE_PAY_TOKEN}")
     private String abacatePayToken;
@@ -74,14 +99,14 @@ public class PaymentController {
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
             // Dispara a requisição para a API real do AbacatePay
-            ResponseEntity<Map> response = restTemplate.postForEntity(
+            ResponseEntity<Map<String, Object>> response = restTemplate.postForEntity(
                     "https://api.abacatepay.com/v1/billing/create",
                     entity,
-                    Map.class
+                    (Class<Map<String, Object>>) (Class<?>) Map.class
             );
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                Map<String, Object> data = (Map<String, Object>) response.getBody().get("data");
+                Map<String, Object> data = asMap(response.getBody().get("data"));
                 String checkoutUrl = (String) data.get("url");
 
                 return ResponseEntity.ok(Map.of("checkoutUrl", checkoutUrl));
@@ -97,9 +122,9 @@ public class PaymentController {
     @PostMapping("/webhook")
     public ResponseEntity<?> handleWebhook(@RequestBody Map<String, Object> payload) {
         try {
-            Map<String, Object> data = (Map<String, Object>) payload.get("data");
+            Map<String, Object> data = asMap(payload.get("data"));
             if (data != null && "PAID".equals(data.get("status"))) {
-                List<Map<String, Object>> products = (List<Map<String, Object>>) data.get("products");
+                List<Map<String, Object>> products = asListOfMaps(data.get("products"));
                 if (products != null && !products.isEmpty()) {
                     String externalId = (String) products.get(0).get("externalId");
                     if (externalId != null && externalId.startsWith("relic-")) {

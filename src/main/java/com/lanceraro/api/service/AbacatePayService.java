@@ -2,6 +2,7 @@ package com.lanceraro.api.service;
 
 import com.lanceraro.api.dto.PixResponseDTO;
 import com.lanceraro.api.model.Relic;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -13,8 +14,21 @@ import java.util.Map;
 @Service
 public class AbacatePayService {
 
-    // TODO: Trocar pelo seu token real gerado no painel do Abacate Pay
-    private final String apiToken = "abc_dev_4JXBhcyFWgkUNQhcBf5eRaSq";
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> asMap(Object value) {
+        if (value instanceof Map<?, ?> map) {
+            Map<String, Object> typed = new HashMap<>();
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                typed.put(String.valueOf(entry.getKey()), entry.getValue());
+            }
+            return typed;
+        }
+        return new HashMap<>();
+    }
+
+    @Value("${ABACATE_PAY_TOKEN}")
+    private String apiToken;
+
     private final String apiUrl = "https://api.abacatepay.com/v1/billing/create";
 
     public PixResponseDTO generatePixBilling(Relic relic) {
@@ -52,10 +66,14 @@ public class AbacatePayService {
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
         try {
-            ResponseEntity<Map> response = restTemplate.postForEntity(apiUrl, entity, Map.class);
+            ResponseEntity<Map<String, Object>> response = restTemplate.postForEntity(
+                    apiUrl,
+                    entity,
+                    (Class<Map<String, Object>>) (Class<?>) Map.class
+            );
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                Map<String, Object> data = (Map<String, Object>) response.getBody().get("data");
+                Map<String, Object> data = asMap(response.getBody().get("data"));
                 PixResponseDTO dto = new PixResponseDTO();
                 dto.setSuccess(true);
                 dto.setPaymentUrl((String) data.get("url")); // O link de pagamento oficial
